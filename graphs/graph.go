@@ -1,32 +1,8 @@
-package graph
+package graphs
 
-import "strconv"
-
-type Node struct {
-	Name  string
-	edges []*Edge
-}
-
-func NewNode(name string) *Node {
-	return &Node{Name: name}
-}
-
-type Edge struct {
-	src, dest *Node
-	weight    int
-}
-
-func NewEdge(src, dest *Node, weight int) *Edge {
-	return &Edge{src, dest, weight}
-}
-
-func (edge *Edge) GetSrc() *Node {
-	return edge.src
-}
-
-func (edge *Edge) GetDest() *Node {
-	return edge.dest
-}
+import (
+	"strconv"
+)
 
 type Graph struct {
 	nodesAmount int
@@ -36,6 +12,10 @@ type Graph struct {
 
 func NewGraph() *Graph {
 	return &Graph{nodesAmount: 0, nodes: nil, edges: nil}
+}
+
+func (graph *Graph) GetNodes() []*Node {
+	return graph.nodes
 }
 
 func (graph *Graph) containsNode(nodeName string) int {
@@ -156,4 +136,74 @@ func (graph *Graph) ToIncidenceMatrix() ([]*Edge, []*Node, [][]int) {
 	}
 
 	return graph.edges, graph.nodes, matrix
+}
+
+func sortEdges(edges []*Edge) []*Edge {
+	n := len(edges)
+	for i := 0; i < n-1; i++ {
+		for j := 0; j < n-i-1; j++ {
+			if edges[j].weight > edges[j+1].weight {
+				edges[j], edges[j+1] = edges[j+1], edges[j]
+			}
+		}
+	}
+	return edges
+}
+
+func (graph *Graph) FindMSTKruskala() *Graph {
+	sortedEdges := sortEdges(graph.edges)
+	MST := NewGraph()
+	uf := NewUnionFind(graph.nodes)
+	for _, edge := range sortedEdges {
+		if uf.Union(edge.src.Name, edge.dest.Name) {
+			MST.AddEdge(edge.src.Name, edge.dest.Name, edge.weight)
+		}
+	}
+	return MST
+}
+
+// обход в глубину (DFS)
+
+func (graph *Graph) DFS(node *Node, visited map[*Node]bool, DFSNodes string) string {
+
+	if visited == nil {
+		visited = make(map[*Node]bool, graph.nodesAmount)
+		for _, graphsNode := range graph.nodes {
+			visited[graphsNode] = false
+		}
+	}
+	visited[node] = true
+	DFSNodes += node.Name + " "
+
+	for _, neighbor := range node.edges {
+		if neighbor.src == node {
+			if !visited[neighbor.dest] {
+				DFSNodes = graph.DFS(neighbor.dest, visited, DFSNodes)
+			}
+		} else {
+			if !visited[neighbor.src] {
+				DFSNodes = graph.DFS(neighbor.src, visited, DFSNodes)
+			}
+		}
+	}
+	return DFSNodes
+}
+
+func (graph *Graph) BFS() string {
+	visited := make(map[*Node]bool, graph.nodesAmount)
+	nodesQueue := make([]string, 0)
+	BFSNodes := ""
+	for _, node := range graph.nodes {
+		if !visited[node] {
+			nodesQueue = append(nodesQueue, node.Name)
+			visited[node] = true
+		}
+	}
+
+	for _, node := range nodesQueue {
+		BFSNodes += node + " "
+	}
+
+	return BFSNodes
+
 }
