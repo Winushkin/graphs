@@ -1,6 +1,7 @@
 package graphs
 
 import (
+	"slices"
 	"strconv"
 )
 
@@ -138,18 +139,6 @@ func (graph *Graph) ToIncidenceMatrix() ([]*Edge, []*Node, [][]int) {
 	return graph.edges, graph.nodes, matrix
 }
 
-func sortEdges(edges []*Edge) []*Edge {
-	n := len(edges)
-	for i := 0; i < n-1; i++ {
-		for j := 0; j < n-i-1; j++ {
-			if edges[j].weight > edges[j+1].weight {
-				edges[j], edges[j+1] = edges[j+1], edges[j]
-			}
-		}
-	}
-	return edges
-}
-
 func (graph *Graph) FindMSTKruskala() *Graph {
 	sortedEdges := sortEdges(graph.edges)
 	MST := NewGraph()
@@ -164,7 +153,7 @@ func (graph *Graph) FindMSTKruskala() *Graph {
 
 // обход в глубину (DFS)
 
-func (graph *Graph) DFS(node *Node, visited map[*Node]bool, DFSNodes string) string {
+func (graph *Graph) RecursiveDFS(node *Node, visited map[*Node]bool, DFSNodes string) string {
 
 	if visited == nil {
 		visited = make(map[*Node]bool, graph.nodesAmount)
@@ -178,15 +167,45 @@ func (graph *Graph) DFS(node *Node, visited map[*Node]bool, DFSNodes string) str
 	for _, neighbor := range node.edges {
 		if neighbor.src == node {
 			if !visited[neighbor.dest] {
-				DFSNodes = graph.DFS(neighbor.dest, visited, DFSNodes)
+				DFSNodes = graph.RecursiveDFS(neighbor.dest, visited, DFSNodes)
 			}
 		} else {
 			if !visited[neighbor.src] {
-				DFSNodes = graph.DFS(neighbor.src, visited, DFSNodes)
+				DFSNodes = graph.RecursiveDFS(neighbor.src, visited, DFSNodes)
 			}
 		}
 	}
 	return DFSNodes
+}
+
+func (graph *Graph) DFS() string {
+	visited := make(map[*Node]bool)
+	stack := make([]*Node, 0)
+	stack = append(stack, graph.nodes[0])
+	DFSstr := ""
+
+	for len(stack) > 0 {
+		cur := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		if !visited[cur] {
+			visited[cur] = true
+			DFSstr += cur.Name + " "
+
+			for _, neighbor := range cur.edges {
+				if neighbor.src == cur {
+					if !visited[neighbor.dest] {
+						stack = append(stack, neighbor.dest)
+					}
+				} else {
+					if !visited[neighbor.src] {
+						stack = append(stack, neighbor.src)
+					}
+				}
+			}
+		}
+	}
+	return DFSstr
 }
 
 func (graph *Graph) BFS() string {
@@ -203,7 +222,32 @@ func (graph *Graph) BFS() string {
 	for _, node := range nodesQueue {
 		BFSNodes += node + " "
 	}
-
 	return BFSNodes
+}
+
+//func (graph *Graph) sortNodes() []*Node {
+//	slices.Sort(graph.nodes, func(i, j int) bool {
+//		return graph.nodes[i].Name < graph.nodes[j].Name
+//	})
+//}
+
+func (graph *Graph) Sort() ([]*Edge, int) {
+	graph.nodes = sortNodes(graph.nodes)
+	sortedEdges := make([]*Edge, 0)
+	SumWeight := 0
+	for _, node := range graph.nodes {
+		for _, edge := range graph.edges {
+			if edge.src == node || edge.dest == node {
+				if edge.src.Name > edge.dest.Name {
+					edge.src, edge.dest = edge.dest, edge.src
+				}
+				if !slices.Contains(sortedEdges, edge) {
+					sortedEdges = append(sortedEdges, edge)
+					SumWeight += edge.weight
+				}
+			}
+		}
+	}
+	return sortedEdges, SumWeight
 
 }
