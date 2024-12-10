@@ -1,30 +1,30 @@
 package graphs
 
 type UnionFind struct {
-	parent map[string]string
-	rank   map[string]int
+	parent map[*Node]*Node
+	rank   map[*Node]int
 }
 
 func NewUnionFind(nodes []*Node) *UnionFind {
 	uf := &UnionFind{
-		parent: make(map[string]string),
-		rank:   make(map[string]int),
+		parent: make(map[*Node]*Node),
+		rank:   make(map[*Node]int),
 	}
 	for _, node := range nodes {
-		uf.parent[node.Name] = node.Name
-		uf.rank[node.Name] = 0
+		uf.parent[node] = node
+		uf.rank[node] = 0
 	}
 	return uf
 }
 
-func (uf *UnionFind) Find(x string) string {
+func (uf *UnionFind) Find(x *Node) *Node {
 	if uf.parent[x] != x {
 		uf.parent[x] = uf.Find(uf.parent[x])
 	}
 	return uf.parent[x]
 }
 
-func (uf *UnionFind) Union(x, y string) bool {
+func (uf *UnionFind) Union(x, y *Node) bool {
 	rootX, rootY := uf.Find(x), uf.Find(y)
 	if rootX == rootY {
 		return false

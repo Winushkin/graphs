@@ -144,7 +144,7 @@ func (graph *Graph) FindMSTKruskala() *Graph {
 	MST := NewGraph()
 	uf := NewUnionFind(graph.nodes)
 	for _, edge := range sortedEdges {
-		if uf.Union(edge.src.Name, edge.dest.Name) {
+		if uf.Union(edge.src, edge.dest) {
 			MST.AddEdge(edge.src.Name, edge.dest.Name, edge.weight)
 		}
 	}
